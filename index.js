@@ -150,6 +150,7 @@ class HtmlWebpackPlugin {
       base: false,
       title: "Webpack App",
       xhtml: false,
+      listProducer: null,
     };
 
     /** @type {ProcessedHtmlWebpackOptions} */
@@ -164,8 +165,7 @@ class HtmlWebpackPlugin {
   apply(compiler) {
     this.logger = compiler.getInfrastructureLogger("HtmlWebpackPlugin");
 
-    // Wait for configuration preset plugins to apply all configure webpack defaults
-    compiler.hooks.initialize.tap("HtmlWebpackPlugin", () => {
+    const handleCompilationOptions = (compilation) => {
       const options = this.options;
 
       options.template = this.getTemplatePath(
@@ -273,13 +273,9 @@ class HtmlWebpackPlugin {
           filename = path.relative(outputPath, filename);
         }
 
-        compiler.hooks.thisCompilation.tap(
-          "HtmlWebpackPlugin",
-          /**
-           * Hook into the webpack compilation
-           * @param {Compilation} compilation
-           */
-          (compilation) => {
+        if (true) {
+          // this is to keep the level of the below block and reduce the amount of thanges
+          {
             compilation.hooks.processAssets.tapAsync(
               {
                 name: "HtmlWebpackPlugin",
@@ -307,10 +303,29 @@ class HtmlWebpackPlugin {
                 );
               },
             );
-          },
-        );
+          }
+        }
       });
-    });
+    };
+
+    const handleCompilation = (compilation) => {
+      const rootOptions = Object.assign({}, this.options);
+      var optionSet = [];
+      if (typeof rootOptions.listProducer === "function") {
+        const list = rootOptions.listProducer();
+        list.forEach(overrides => {
+          optionSet.push(Object.assign(rootOptions, overrides));
+        });
+      } else {
+        optionSet.push(rootOptions);
+      }
+      optionSet.forEach((options) => {
+        // need to fully reassign the options for other internal functions' use
+        this.options = options;
+        handleCompilationOptions(compilation);
+      });
+    };
+    compiler.hooks.thisCompilation.tap("HtmlWebpackPlugin", handleCompilation);
   }
 
   /**
