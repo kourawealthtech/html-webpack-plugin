@@ -309,21 +309,21 @@ class HtmlWebpackPlugin {
     };
 
     const handleCompilation = (compilation) => {
-      const rootOptions = Object.assign({}, this.options);
-      var optionSet = [];
-      if (typeof rootOptions.listProducer === "function") {
-        const list = rootOptions.listProducer();
-        list.forEach(overrides => {
-          optionSet.push(Object.assign(rootOptions, overrides));
+      const baseOptions = Object.assign({}, this.options);
+
+      const baseUserOptions = Object.assign({}, this.userOptions);
+      if (typeof baseOptions.listProducer === "function") {
+        const optionSet = baseOptions.listProducer();
+        optionSet.forEach(overrides => {
+          // need to fully reassign the options for other internal functions' use
+          this.userOptions = Object.assign({}, baseUserOptions, overrides);
+          this.options = Object.assign({}, baseOptions, overrides);
+          handleCompilationOptions(compilation);
         });
       } else {
-        optionSet.push(rootOptions);
-      }
-      optionSet.forEach((options) => {
-        // need to fully reassign the options for other internal functions' use
-        this.options = options;
+        // no overrides, just use the base options as normal
         handleCompilationOptions(compilation);
-      });
+      }
     };
     compiler.hooks.thisCompilation.tap("HtmlWebpackPlugin", handleCompilation);
   }
