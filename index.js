@@ -275,6 +275,8 @@ class HtmlWebpackPlugin {
 
         if (true) {
           // this is to keep the level of the below block and reduce the amount of thanges
+          const savedOptions = Object.assign({}, this.options);
+          const savedUserOptions = Object.assign({}, this.userOptions);
           {
             compilation.hooks.processAssets.tapAsync(
               {
@@ -292,6 +294,8 @@ class HtmlWebpackPlugin {
                * @param {(err?: Error) => void} callback
                */
               (_, callback) => {
+                this.options = savedOptions;
+                this.userOptions = savedUserOptions;
                 this.generateHTML(
                   compiler,
                   compilation,
